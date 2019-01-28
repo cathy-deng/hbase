@@ -42,15 +42,15 @@ hdfs:
 
 persistence:
   nameNode:
-    enabled: true
-    storageClass: "hbase-namenode-nfs-storage"
-    accessMode: ReadWriteMany
+    enabled: false
+    storageClass: "-"
+    accessMode: ReadWriteOnce
     size: 50Gi
 
   dataNode:
-    enabled: true
-    storageClass: "hbase-datanode-nfs-storage"
-    accessMode: ReadWriteMany
+    enabled: false
+    storageClass: "-"
+    accessMode: ReadWriteOnce
     size: 200Gi
 
 hbase:
