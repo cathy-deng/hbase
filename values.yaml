@@ -1,0 +1,79 @@
+# The base hadoop image to use for all components.
+# See this repo for image build details: https://github.com/Comcast/kube-yarn/tree/master/image
+image: danisla/hadoop:2.7.3
+imagePullPolicy: IfNotPresent
+
+hbaseimage: 
+  repository: 33098876/hbase
+  tag: lastest
+  pullPolicy: Always
+hbaseVersion: 1.4.9
+
+# The version of the hadoop libraries being used in the image.
+hadoopVersion: 2.7.3
+
+# Select anitAffinity as either hard or soft, default is hard
+antiAffinity: "soft"
+
+hdfs:
+  nameNode:
+    pdbMinAvailable: 1
+
+    resources:
+      requests:
+        memory: "2048Mi"
+        cpu: "10m"
+      limits:
+        memory: "2048Mi"
+        cpu: "1000m"
+
+  dataNode:
+    replicas: 3
+
+    pdbMinAvailable: 3
+
+    resources:
+      requests:
+        memory: "2048Mi"
+        cpu: "10m"
+      limits:
+        memory: "2048Mi"
+        cpu: "1000m"
+
+persistence:
+  nameNode:
+    enabled: true
+    storageClass: "hbase-namenode-nfs-storage"
+    accessMode: ReadWriteMany
+    size: 50Gi
+
+  dataNode:
+    enabled: true
+    storageClass: "hbase-datanode-nfs-storage"
+    accessMode: ReadWriteMany
+    size: 200Gi
+
+hbase:
+  env:
+    zookeeperServiceList: myzk-zookeeper
+    zookeeperPort: "2181"
+  master:
+    replicas: 1
+    resources:
+      requests:
+        memory: "2048Mi"
+        cpu: "10m"
+      limits:
+        memory: "2048Mi"
+        cpu: "1000m"
+  region:
+    replicas: 3
+    resources:
+      requests:
+        memory: "2048Mi"
+        cpu: "10m"
+      limits:
+        memory: "2048Mi"
+        cpu: "1000m"
+  zookeeper:
+    quorum: "myzk-zookeeper"

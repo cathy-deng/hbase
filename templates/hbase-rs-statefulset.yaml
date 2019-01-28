@@ -1,0 +1,70 @@
+apiVersion: apps/v1beta1
+kind: StatefulSet
+metadata:
+  name: {{ template "hbase.name" . }}-hbase-rs
+  annotations:
+    checksum/config: {{ include (print $.Template.BasePath "/hadoop-configmap.yaml") . | sha256sum }}
+  labels:
+    app: {{ template "hadoop.name" . }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    component: hbase-rs
+spec:
+  serviceName: {{ template "hbase.name" . }}-hbase-rs
+  replicas: {{ .Values.hbase.region.replicas }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "hadoop.name" . }}
+        release: {{ .Release.Name }}
+        component: hbase-rs
+    spec:
+      affinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+          - topologyKey: "kubernetes.io/hostname"
+            labelSelector:
+              matchLabels:
+                app:  {{ template "hadoop.name" . }}
+                release: {{ .Release.Name | quote }}
+                component: hdfs-nn
+      terminationGracePeriodSeconds: 0
+      containers:
+      - name: hbase-rs
+        image: "{{ .Values.hbaseimage.repository }}:{{ .Values.hbaseimage.tag }}"
+        imagePullPolicy: {{ .Values.hbaseimage.pullPolicy }}
+        env:
+          - name: HBASE_SERVER_TYPE
+            value: hbase-regionserver
+          - name: HDFS_PATH
+            value: {{ template "hbase.name" . }}-hdfs-nn:9000
+          - name: ZOOKEEPER_SERVICE_LIST
+            value: {{ .Values.hbase.env.zookeeperServiceList }}
+          - name: ZOOKEEPER_PORT
+            value: "{{ .Values.hbase.env.zookeeperPort }}"
+          - name: ZNODE_PARENT
+            value: hbase
+        ports:
+          - name: port11
+            containerPort: 16020
+            protocol: TCP
+          - name: port12
+            containerPort: 16030
+            protocol: TCP
+        command:
+          - "/bin/bash"
+          - "/opt/hbase/bin/start-k8s-hbase.sh"
+        resources:
+{{ toYaml .Values.hbase.region.resources | indent 12 }}
+    {{- with .Values.nodeSelector }}
+      nodeSelector:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+{{ toYaml . | indent 8 }}
+    {{- end }}
